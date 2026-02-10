@@ -12,13 +12,14 @@
 #define MIN(X,Y)((X < Y) ? (X) : (Y))
 
 const double TEMPERATURA_INICIAL = 1000.0;
-const double TEMPERATURA_FINAL = 0.01;
-const double ALPHA = 0.98; // Taxa de resfriamento
-const int ITER_POR_TEMP = 100;
+const double TEMPERATURA_CONGELAMENTO = 0.01;
+const double TAXA_RESFRIAMENTO = 0.98;
+const int SA_MAXIMO = 100;
+const int TEMPO_MAXIMO = 100;
 
 int main(void) {
 	Solucao s;
-	int n = 5;
+	int n = 0;
 	const char* entrada[] = {
 		//Instâncias Não-Euclideanas:
 		//Pequenas
@@ -32,6 +33,10 @@ int main(void) {
 		"Grandes/Russia17n.car" // 5
 	};
 	
+	int TEMPO_TOTAL = 0;
+	int TEMPO_MELHOR = 0;
+	int NUMERO_SOLUCOES = 0;
+
 	lerDados(entrada[n]);
 	//testarDados(" ");
 	
@@ -66,7 +71,7 @@ int main(void) {
 	escrever_solucao("saida.txt", s);
 	*/
 	heu_cons_ale_gul(s, 0.3);
-	sa(s);
+	sa(s,TEMPO_TOTAL,TEMPO_MELHOR,NUMERO_SOLUCOES);
 	printf("SA com anabolizantes");
 	escrever_solucao("saida.txt", s, entrada[n]);
 	
@@ -173,12 +178,10 @@ void testarDados(const char* arq) {
 }
 
 void gerar_vizinha(Solucao& s, int flag) {
-
-	// --- FLAG 1: TROCA DE CARRO (Mantém a rota, muda o veículo) ---
 	if (flag == 1 || flag == 3) {
 		int cidade = rand() % num_cidades;
 
-		if (num_carros > 1) { // Proteção contra loop infinito se só houver 1 carro
+		if (num_carros > 1) { 
 			int carro_atual = s.vet_carro[cidade];
 			int novo_carro = rand() % num_carros;
 			while (novo_carro == carro_atual) {
@@ -188,14 +191,9 @@ void gerar_vizinha(Solucao& s, int flag) {
 		}
 	}
 
-	// --- FLAG 2: RELOCATE / SHIFT (Muda a rota via ponteiros) ---
 	else if (flag == 2 || flag == 3) {
 
-		// 1. Escolhe a cidade a ser movida (Origem 'u')
 		int u = rand() % num_cidades;
-
-		// 2. Encontra o PREDECESSOR de u (Quem aponta para u?)
-		// Como é lista de sucessores simples, precisamos buscar linearmente
 		int prev_u = -1;
 		for (int k = 0; k < num_cidades; k++) {
 			if (s.vet_sol[k] == u) {
@@ -204,45 +202,21 @@ void gerar_vizinha(Solucao& s, int flag) {
 			}
 		}
 
-		// 3. Escolhe o destino (Inserir APÓS a cidade 'v')
 		int v = rand() % num_cidades;
-
-		// Validações para evitar movimentos nulos ou inválidos:
-		// - Não pode inserir depois de si mesmo (v != u)
-		// - Não pode inserir onde já está (v != prev_u)
 		while (v == u || v == prev_u) {
 			v = rand() % num_cidades;
 		}
 
-		// 4. Salva os ponteiros originais
-		int next_u = s.vet_sol[u]; // Quem u aponta atualmente
-		int next_v = s.vet_sol[v]; // Quem v aponta atualmente
+		int next_u = s.vet_sol[u]; 
+		int next_v = s.vet_sol[v]; 
 
-		// 5. RE-LIGAÇÃO DOS PONTEIROS (A "Cirurgia" no Ciclo)
-
-		// Passo A: Remove 'u' do local atual
-		// O anterior de u (prev_u) passa a apontar para o próximo de u (next_u)
-		// O carro que saía de prev_u agora faz a viagem direta para next_u
 		s.vet_sol[prev_u] = next_u;
-
-		// Passo B: Insere 'u' após 'v'
-		// 'v' passa a apontar para 'u'
 		s.vet_sol[v] = u;
-
-		// 'u' passa a apontar para o antigo próximo de 'v'
 		s.vet_sol[u] = next_v;
-
-		// Nota sobre Carros:
-		// Os carros associados aos nós (vet_carro[i]) continuam saindo de 'i'.
-		// vet_carro[prev_u] agora leva até next_u.
-		// vet_carro[v] agora leva até u.
-		// vet_carro[u] agora leva até next_v.
-		// Isso é válido e cria uma perturbação natural nos custos.
 	}
 }
 
 void calcular_fo(Solucao& s) {
-	
 	s.fo = 0;
 
 	//distancia
@@ -272,7 +246,6 @@ void calcular_fo(Solucao& s) {
 		int proxima_cidade = s.vet_sol[cidade_atual];
 		int carro_atual = s.vet_carro[cidade_atual];
 		int carro_proximo = s.vet_carro[proxima_cidade];
-
 		
 		if (carro_atual != carro_proximo) {
 
@@ -435,8 +408,6 @@ void heu_MM(Solucao& s) {
 	int melhorou = 1;
 	Solucao melhor_vizinho;
 
-	// Vetor de predecessores (Quem aponta para quem)
-	// Necessário para fazer a "costura" da lista de sucessores corretamente
 	int ant[MAX_CID];
 
 	calcular_fo(s);
@@ -446,41 +417,31 @@ void heu_MM(Solucao& s) {
 		int melhor_fo_iteracao = s.fo;
 		memcpy(&melhor_vizinho, &s, sizeof(Solucao));
 
-		// 1. Reconstrói a lista de "Anteriores" (Predecessores)
-		// Se s.vet_sol[A] = B (A aponta para B), então ant[B] = A
 		for (int k = 0; k < num_cidades; k++) {
 			ant[s.vet_sol[k]] = k;
 		}
 
-		// --- VIZINHANÇA 1: SWAP DE CIDADES (Re-ligando ponteiros) ---
 		for (int i = 0; i < num_cidades - 1; i++) {
 			for (int j = i + 1; j < num_cidades; j++) {
 				int u = i;
 				int v = j;
 
-				// Recupera os vizinhos
 				int prev_u = ant[u];
 				int next_u = s.vet_sol[u];
 				int prev_v = ant[v];
 				int next_v = s.vet_sol[v];
 
-				// APLICA O MOVIMENTO (Cuidado com Adjacências)
-
-				// Caso 1: U aponta para V (U -> V)
 				if (next_u == v) {
 					s.vet_sol[prev_u] = v;
 					s.vet_sol[v] = u;
 					s.vet_sol[u] = next_v;
-					// Atualiza 'ant' temporariamente para consistência se necessário, 
-					// mas como recalculamos FO e desfazemos logo, basta alterar o vetor sol.
+					
 				}
-				// Caso 2: V aponta para U (V -> U)
 				else if (next_v == u) {
 					s.vet_sol[prev_v] = u;
 					s.vet_sol[u] = v;
 					s.vet_sol[v] = next_u;
 				}
-				// Caso 3: Não adjacentes ( ... P_u -> U -> N_u ... P_v -> V -> N_v ... )
 				else {
 					s.vet_sol[prev_u] = v;
 					s.vet_sol[v] = next_u;
@@ -488,17 +449,12 @@ void heu_MM(Solucao& s) {
 					s.vet_sol[u] = next_v;
 				}
 
-
-
 				calcular_fo(s);
-
 				if (s.fo < melhor_fo_iteracao) {
 					melhor_fo_iteracao = s.fo;
 					memcpy(&melhor_vizinho, &s, sizeof(Solucao));
 					melhorou = 1;
 				}
-
-				// DESFAZ O MOVIMENTO (Undo exato)
 				if (next_u == v) {
 					s.vet_sol[prev_u] = u;
 					s.vet_sol[u] = v;
@@ -554,7 +510,7 @@ void heu_MM(Solucao& s) {
 	calcular_fo(s);
 }
 
-void sa(Solucao& s) {
+void sa(Solucao& s, int TEMPO_TOTAL, int TEMPO_MELHOR, int NUMERO_SOLUCOES) {
 	// inicia
 	Solucao s_melhor;
 	Solucao s_vizinha;
@@ -564,9 +520,9 @@ void sa(Solucao& s) {
 
 	double T = TEMPERATURA_INICIAL;
 
-	while (T > TEMPERATURA_FINAL) {
+	while (T > TEMPERATURA_CONGELAMENTO) {
 
-		for (int i = 0; i < ITER_POR_TEMP; i++) {
+		for (int i = 0; i < SA_MAXIMO; i++) {
 			memset(&s_vizinha, 0, sizeof(Solucao));
 			memcpy(&s_vizinha, &s, sizeof(Solucao));
 
@@ -605,7 +561,7 @@ void sa(Solucao& s) {
 		}
 
 		// fica frio ai
-		T *= ALPHA;
+		T *= TAXA_RESFRIAMENTO;
 	}
 
 	// escreve a melhor que achou

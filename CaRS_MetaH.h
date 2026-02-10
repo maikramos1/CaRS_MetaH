@@ -27,7 +27,7 @@ void gerar_vizinha(Solucao& s, int flag);
 void calcular_fo(Solucao& s);
 void escrever_solucao(const char* arq_solucao, Solucao s, const char* string);
 void heu_MM(Solucao& s);
-void sa(Solucao& s);
+void sa(Solucao& s, int TEMPO_TOTAL, int TEMPO_MELHOR, int NUMERO_SOLUCOES);
 void heu_cons_ale_gul(Solucao& s, const double percentual);
 void heu_cons_ale(Solucao& s);
 #endif 

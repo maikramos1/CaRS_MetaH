@@ -1,7 +1,7 @@
 //------------------------------
-  SOLUCAO DO PROBLEMA CaRS Grandes/Russia17n.car
+  SOLUCAO DO PROBLEMA CaRS Pequenas/Mauritania10n.car
 //------------------------------
 
-Valor da Funcao Objetivo: 1104
+Valor da Funcao Objetivo: 612
 
-CaRS: 0 -[1]-> 13 -[1]-> 15 -[1]-> 8 -[2]-> 12 -[2]-> 3 -[2]-> 16 -[2]-> 10 -[4]-> 11 -[4]-> 9 -[4]-> 7 -[4]-> 5 -[4]-> 14 -[4]-> 4 -[3]-> 6 -[3]-> 1 -[3]-> 2 -[3]-> 0 
+CaRS: 0 -[1]-> 8 -[1]-> 7 -[1]-> 9 -[1]-> 6 -[0]-> 2 -[0]-> 4 -[0]-> 1 -[0]-> 5 -[0]-> 3 -[0]-> 0 
