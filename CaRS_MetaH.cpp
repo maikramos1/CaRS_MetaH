@@ -1,7 +1,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string.h>
-#include <cstdlib>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#include <omp.h>
 #include <memory.h>
 #include "CaRS_MetaH.h"
 
@@ -14,23 +17,22 @@ const double ALPHA = 0.98; // Taxa de resfriamento
 const int ITER_POR_TEMP = 100;
 
 int main(void) {
-
 	Solucao s;
-
+	int n = 5;
 	const char* entrada[] = {
 		//Instâncias Não-Euclideanas:
 		//Pequenas
-		"Pequenas/Mauritania10n.car",
-		"Pequenas/Bolivia10n.car",
+		"Pequenas/Mauritania10n.car", // 0
+		"Pequenas/Bolivia10n.car", // 1
 		//Médias
-		"Medias/AfricaSul11n.car",
-		"Medias/Peru13n.car",
+		"Medias/AfricaSul11n.car", // 2
+		"Medias/Peru13n.car", // 3
 		//Grandes
-		"Grandes/Brasil16n.car",
-		"Grandes/Russia17n.car"
+		"Grandes/Brasil16n.car", // 4
+		"Grandes/Russia17n.car" // 5
 	};
-
-	lerDados(entrada[0]);
+	
+	lerDados(entrada[n]);
 	//testarDados(" ");
 	
 	/*
@@ -51,25 +53,23 @@ int main(void) {
 
 	heu_cons_ale(s);
 	printf("aleatoria");
-	escrever_solucao("saida.txt", s);
-	*/
-
+	escrever_solucao("saida.txt", s);	
+	
 	heu_cons_ale_gul(s, 0.3);
 	heu_MM(s);
 	printf("busca local");
 	escrever_solucao("saida.txt", s);
-
+		
 	heu_cons_ale_gul(s, 0.3);
 	sa(s);
 	printf("SA sem busca local");
 	escrever_solucao("saida.txt", s);
-
+	*/
 	heu_cons_ale_gul(s, 0.3);
-	heu_MM(s);
 	sa(s);
-	printf("SA com busca local");
-	escrever_solucao("saida.txt", s);
-
+	printf("SA com anabolizantes");
+	escrever_solucao("saida.txt", s, entrada[n]);
+	
 
 
 
@@ -173,38 +173,73 @@ void testarDados(const char* arq) {
 }
 
 void gerar_vizinha(Solucao& s, int flag) {
-	if (flag == 1 || 3) {
-		//troca carro
+
+	// --- FLAG 1: TROCA DE CARRO (Mantém a rota, muda o veículo) ---
+	if (flag == 1 || flag == 3) {
 		int cidade = rand() % num_cidades;
-		int carro = rand() % num_carros;
-		while (carro == s.vet_carro[cidade]) {
-			carro = rand() % num_carros;
+
+		if (num_carros > 1) { // Proteção contra loop infinito se só houver 1 carro
+			int carro_atual = s.vet_carro[cidade];
+			int novo_carro = rand() % num_carros;
+			while (novo_carro == carro_atual) {
+				novo_carro = rand() % num_carros;
+			}
+			s.vet_carro[cidade] = novo_carro;
 		}
-		s.vet_carro[cidade] = carro;
 	}
-	else if (flag == 2 || flag == 3){
-		
-		//troca cidade
-		//fui burro e agora vou ter que empurrar o vetor inteiro
-		int origem = rand() % num_cidades;
-		int destino = rand() % num_cidades;
 
-		while (origem == destino) {
-			destino = rand() % num_cidades;
+	// --- FLAG 2: RELOCATE / SHIFT (Muda a rota via ponteiros) ---
+	else if (flag == 2 || flag == 3) {
+
+		// 1. Escolhe a cidade a ser movida (Origem 'u')
+		int u = rand() % num_cidades;
+
+		// 2. Encontra o PREDECESSOR de u (Quem aponta para u?)
+		// Como é lista de sucessores simples, precisamos buscar linearmente
+		int prev_u = -1;
+		for (int k = 0; k < num_cidades; k++) {
+			if (s.vet_sol[k] == u) {
+				prev_u = k;
+				break;
+			}
 		}
 
-		int cidade_movida = s.vet_sol[origem];
+		// 3. Escolhe o destino (Inserir APÓS a cidade 'v')
+		int v = rand() % num_cidades;
 
-		// Desloca para a esquerda <<<<<
-		if (origem < destino) for (int i = origem; i < destino; i++) s.vet_sol[i] = s.vet_sol[i + 1];
+		// Validações para evitar movimentos nulos ou inválidos:
+		// - Não pode inserir depois de si mesmo (v != u)
+		// - Não pode inserir onde já está (v != prev_u)
+		while (v == u || v == prev_u) {
+			v = rand() % num_cidades;
+		}
 
-		// Desloca para a direita >>>>>
-		else for (int i = origem; i > destino; i--) s.vet_sol[i] = s.vet_sol[i - 1];
-		
-		s.vet_sol[destino] = cidade_movida;
-		
+		// 4. Salva os ponteiros originais
+		int next_u = s.vet_sol[u]; // Quem u aponta atualmente
+		int next_v = s.vet_sol[v]; // Quem v aponta atualmente
+
+		// 5. RE-LIGAÇÃO DOS PONTEIROS (A "Cirurgia" no Ciclo)
+
+		// Passo A: Remove 'u' do local atual
+		// O anterior de u (prev_u) passa a apontar para o próximo de u (next_u)
+		// O carro que saía de prev_u agora faz a viagem direta para next_u
+		s.vet_sol[prev_u] = next_u;
+
+		// Passo B: Insere 'u' após 'v'
+		// 'v' passa a apontar para 'u'
+		s.vet_sol[v] = u;
+
+		// 'u' passa a apontar para o antigo próximo de 'v'
+		s.vet_sol[u] = next_v;
+
+		// Nota sobre Carros:
+		// Os carros associados aos nós (vet_carro[i]) continuam saindo de 'i'.
+		// vet_carro[prev_u] agora leva até next_u.
+		// vet_carro[v] agora leva até u.
+		// vet_carro[u] agora leva até next_v.
+		// Isso é válido e cria uma perturbação natural nos custos.
 	}
-};
+}
 
 void calcular_fo(Solucao& s) {
 	
@@ -246,7 +281,7 @@ void calcular_fo(Solucao& s) {
 
 			// RESTRIÇÃO
 			if (proxima_cidade % 2 != 0) {
-				s.fo += 1000000; // Penalidade alta para inviabilizar a solução
+				s.fo += 10000; // Penalidade alta para inviabilizar a solução
 			}
 
 			cidade_onde_pegou = proxima_cidade;
@@ -260,17 +295,17 @@ void calcular_fo(Solucao& s) {
 	}
 };
 
-void escrever_solucao(const char* arq_solucao, Solucao s) {
+void escrever_solucao(const char* arq_solucao, Solucao s, const char* string) {
 		FILE* f;
 		FILE* g;
 		f = stdout;
 		g = fopen(arq_solucao, "w");
 
 		fprintf(f, "\n//------------------------------\n");
-		fprintf(f, "  SOLUCAO DO PROBLEMA CaRS\n");
+		fprintf(f, "  SOLUCAO DO PROBLEMA CaRS %s\n", string);
 		fprintf(f, "//------------------------------\n\n");
 		fprintf(g, "//------------------------------\n");
-		fprintf(g, "  SOLUCAO DO PROBLEMA CaRS\n");
+		fprintf(g, "  SOLUCAO DO PROBLEMA CaRS %s\n", string);
 		fprintf(g, "//------------------------------\n\n");
 		fprintf(f, "Valor da Funcao Objetivo: %d\n\n", s.fo);
 		fprintf(g, "Valor da Funcao Objetivo: %d\n\n", s.fo);
@@ -399,6 +434,9 @@ void solucao_bolivia(Solucao& s) {
 void heu_MM(Solucao& s) {
 	int melhorou = 1;
 	Solucao melhor_vizinho;
+
+	// Vetor de predecessores (Quem aponta para quem)
+	// Necessário para fazer a "costura" da lista de sucessores corretamente
 	int ant[MAX_CID];
 
 	calcular_fo(s);
@@ -406,34 +444,43 @@ void heu_MM(Solucao& s) {
 	while (melhorou) {
 		melhorou = 0;
 		int melhor_fo_iteracao = s.fo;
-		melhor_vizinho = s;
+		memcpy(&melhor_vizinho, &s, sizeof(Solucao));
 
+		// 1. Reconstrói a lista de "Anteriores" (Predecessores)
+		// Se s.vet_sol[A] = B (A aponta para B), então ant[B] = A
 		for (int k = 0; k < num_cidades; k++) {
 			ant[s.vet_sol[k]] = k;
 		}
 
+		// --- VIZINHANÇA 1: SWAP DE CIDADES (Re-ligando ponteiros) ---
 		for (int i = 0; i < num_cidades - 1; i++) {
 			for (int j = i + 1; j < num_cidades; j++) {
 				int u = i;
 				int v = j;
 
+				// Recupera os vizinhos
 				int prev_u = ant[u];
 				int next_u = s.vet_sol[u];
 				int prev_v = ant[v];
 				int next_v = s.vet_sol[v];
 
+				// APLICA O MOVIMENTO (Cuidado com Adjacências)
+
+				// Caso 1: U aponta para V (U -> V)
 				if (next_u == v) {
 					s.vet_sol[prev_u] = v;
 					s.vet_sol[v] = u;
 					s.vet_sol[u] = next_v;
+					// Atualiza 'ant' temporariamente para consistência se necessário, 
+					// mas como recalculamos FO e desfazemos logo, basta alterar o vetor sol.
 				}
-				
+				// Caso 2: V aponta para U (V -> U)
 				else if (next_v == u) {
 					s.vet_sol[prev_v] = u;
 					s.vet_sol[u] = v;
 					s.vet_sol[v] = next_u;
 				}
-
+				// Caso 3: Não adjacentes ( ... P_u -> U -> N_u ... P_v -> V -> N_v ... )
 				else {
 					s.vet_sol[prev_u] = v;
 					s.vet_sol[v] = next_u;
@@ -441,14 +488,17 @@ void heu_MM(Solucao& s) {
 					s.vet_sol[u] = next_v;
 				}
 
+
+
 				calcular_fo(s);
 
 				if (s.fo < melhor_fo_iteracao) {
 					melhor_fo_iteracao = s.fo;
-					melhor_vizinho = s;
+					memcpy(&melhor_vizinho, &s, sizeof(Solucao));
 					melhorou = 1;
 				}
 
+				// DESFAZ O MOVIMENTO (Undo exato)
 				if (next_u == v) {
 					s.vet_sol[prev_u] = u;
 					s.vet_sol[u] = v;
@@ -468,11 +518,16 @@ void heu_MM(Solucao& s) {
 			}
 		}
 
+		// Restaura o valor de FO correto da solução atual antes de tentar carros
 		s.fo = melhor_fo_iteracao;
+		// Se não houve melhora na troca de cidades, garante que a struct 's' está íntegra
 		if (!melhorou) calcular_fo(s);
 
-		
+		// --- VIZINHANÇA 2: TROCA DE CARROS ---
 		for (int j = 0; j < num_cidades; j++) {
+
+			if (j % 2 != 0) continue; // Pula os pares (não pode trocar neles)
+
 			int carro_original = s.vet_carro[j];
 
 			for (int k = 0; k < num_carros; k++) {
@@ -487,6 +542,7 @@ void heu_MM(Solucao& s) {
 					memcpy(&melhor_vizinho, &s, sizeof(Solucao));
 					melhorou = 1;
 				}
+				// Undo
 				s.vet_carro[j] = carro_original;
 			}
 		}
@@ -495,6 +551,7 @@ void heu_MM(Solucao& s) {
 			memcpy(&s, &melhor_vizinho, sizeof(Solucao));
 		}
 	}
+	calcular_fo(s);
 }
 
 void sa(Solucao& s) {
@@ -515,6 +572,13 @@ void sa(Solucao& s) {
 
 			// pedra, papel ou tesoura
 			gerar_vizinha(s_vizinha, rand() % 3);
+			//====================================================================================================
+			// Injeção de anabolizante para o SA
+			//====================================================================================================
+			heu_MM(s_vizinha);
+			//====================================================================================================
+			//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+			//====================================================================================================
 			calcular_fo(s_vizinha);
 			double delta = s_vizinha.fo - s.fo;
 
@@ -526,7 +590,7 @@ void sa(Solucao& s) {
 					memcpy(&s_melhor, &s, sizeof(Solucao));
 					//nova melhor solucao
 					//printf("FO: %d\n", s_melhor.fo);
-					escrever_solucao("saida.txt", s_melhor);
+					//escrever_solucao("saida.txt", s_melhor);
 				}
 			}
 			else {
