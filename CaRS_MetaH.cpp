@@ -30,20 +30,49 @@ int main(void) {
 		"Grandes/Russia17n.car"
 	};
 
-	lerDados(entrada[1]);
-
+	lerDados(entrada[0]);
 	//testarDados(" ");
 	
-	//solucao_mauritania(s);
-	//printf("mauritania");
-	//escrever_solucao("saida.txt", s);
-
-	printf("bolivia");
-	solucao_bolivia(s);
-	//gerar_vizinha(s,rand()%3);
-	calcular_fo(s);
-	//original
+	/*
+	solucao_mauritania(s);
+	printf("mauritania");
 	escrever_solucao("saida.txt", s);
+	
+	//printf("bolivia");
+	//solucao_bolivia(s);
+	gerar_vizinha(s,2);
+	calcular_fo(s);
+	printf("vizinha");
+	escrever_solucao("saida.txt", s);
+
+	heu_cons_ale_gul(s, 0.3);
+	printf("gulosa");
+	escrever_solucao("saida.txt", s);
+
+	heu_cons_ale(s);
+	printf("aleatoria");
+	escrever_solucao("saida.txt", s);
+	*/
+
+	heu_cons_ale_gul(s, 0.3);
+	heu_MM(s);
+	printf("busca local");
+	escrever_solucao("saida.txt", s);
+
+	heu_cons_ale_gul(s, 0.3);
+	sa(s);
+	printf("SA sem busca local");
+	escrever_solucao("saida.txt", s);
+
+	heu_cons_ale_gul(s, 0.3);
+	heu_MM(s);
+	sa(s);
+	printf("SA com busca local");
+	escrever_solucao("saida.txt", s);
+
+
+
+
 	
 	//sa(s);
 	//escrever_solucao("saida.txt", s);
@@ -53,7 +82,6 @@ int main(void) {
 }
 
 void lerDados(const char* arq) {
-
 	FILE* f = fopen(arq, "r");
 
 	char aux[200];
@@ -103,10 +131,9 @@ void lerDados(const char* arq) {
 			}
 		}
 	}
-
 	fclose(f);
-
 }
+
 void testarDados(const char* arq) {
 
 	FILE* f;
@@ -189,15 +216,14 @@ void calcular_fo(Solucao& s) {
 	}
 
 	int primeiro_no_ciclo = 0;
-	bool troca_encontrada = false;
-
+	int troca_encontrada = 0;
 	
 	int atual_temp = 0;
 	for (int k = 0; k < num_cidades; k++) {
 		int proximo = s.vet_sol[atual_temp];
 		if (s.vet_carro[atual_temp] != s.vet_carro[proximo]) {
 			primeiro_no_ciclo = proximo; 
-			troca_encontrada = true;
+			troca_encontrada = 1;
 			break;
 		}
 		atual_temp = proximo;
@@ -294,15 +320,6 @@ void escrever_solucao(const char* arq_solucao, Solucao s) {
 };
 
 void solucao_mauritania(Solucao& s) {
-	/*
-	for (int i = 0; i < num_cidades-1; i++) {
-		s.vet_sol[i] = i+1;
-		s.vet_carro[i] = 0;
-	}
-	s.vet_sol[num_cidades-1] = 0;
-	s.vet_carro[num_cidades - 1] = 0;
-	*/
-
 	//mauritania
 	//fo:622
 	memset(&s, 0, sizeof(Solucao));
@@ -342,17 +359,8 @@ void solucao_mauritania(Solucao& s) {
 };
 
 void solucao_bolivia(Solucao& s) {
-	/*
-	for (int i = 0; i < num_cidades-1; i++) {
-		s.vet_sol[i] = i+1;
-		s.vet_carro[i] = 0;
-	}
-	s.vet_sol[num_cidades-1] = 0;
-	s.vet_carro[num_cidades - 1] = 0;
-	*/
 	memset(&s, 0, sizeof(Solucao));
 	s.fo = 0;
-
 
 	//bolivia 825
 	s.vet_sol[0] = 1;
@@ -387,53 +395,99 @@ void solucao_bolivia(Solucao& s) {
 	calcular_fo(s);
 };
 
+//esse aqui fiz no gepeteco, nada fazia funcionar
 void heu_MM(Solucao& s) {
 	int melhorou = 1;
 	Solucao melhor_vizinho;
-	Solucao vizinho;
-	memcpy(&melhor_vizinho, &s, sizeof(Solucao));
-	memcpy(&vizinho, &s, sizeof(Solucao));
+	int ant[MAX_CID];
+
+	calcular_fo(s);
 
 	while (melhorou) {
 		melhorou = 0;
-		int melhor_fo_local = s.fo;
+		int melhor_fo_iteracao = s.fo;
+		melhor_vizinho = s;
 
-		// troca todas as cidades
+		for (int k = 0; k < num_cidades; k++) {
+			ant[s.vet_sol[k]] = k;
+		}
+
 		for (int i = 0; i < num_cidades - 1; i++) {
 			for (int j = i + 1; j < num_cidades; j++) {
-				int aux = vizinho.vet_sol[i];
-				vizinho.vet_sol[i] = vizinho.vet_sol[j];
-				vizinho.vet_sol[j] = aux;
-				calcular_fo(vizinho);
-				if (vizinho.fo < melhor_fo_local) {
-					melhor_fo_local = vizinho.fo;
-					memcpy(&melhor_vizinho, &vizinho, sizeof(Solucao));
+				int u = i;
+				int v = j;
+
+				int prev_u = ant[u];
+				int next_u = s.vet_sol[u];
+				int prev_v = ant[v];
+				int next_v = s.vet_sol[v];
+
+				if (next_u == v) {
+					s.vet_sol[prev_u] = v;
+					s.vet_sol[v] = u;
+					s.vet_sol[u] = next_v;
+				}
+				
+				else if (next_v == u) {
+					s.vet_sol[prev_v] = u;
+					s.vet_sol[u] = v;
+					s.vet_sol[v] = next_u;
+				}
+
+				else {
+					s.vet_sol[prev_u] = v;
+					s.vet_sol[v] = next_u;
+					s.vet_sol[prev_v] = u;
+					s.vet_sol[u] = next_v;
+				}
+
+				calcular_fo(s);
+
+				if (s.fo < melhor_fo_iteracao) {
+					melhor_fo_iteracao = s.fo;
+					melhor_vizinho = s;
 					melhorou = 1;
+				}
+
+				if (next_u == v) {
+					s.vet_sol[prev_u] = u;
+					s.vet_sol[u] = v;
+					s.vet_sol[v] = next_v;
+				}
+				else if (next_v == u) {
+					s.vet_sol[prev_v] = v;
+					s.vet_sol[v] = u;
+					s.vet_sol[u] = next_u;
+				}
+				else {
+					s.vet_sol[prev_u] = u;
+					s.vet_sol[u] = next_u;
+					s.vet_sol[prev_v] = v;
+					s.vet_sol[v] = next_v;
 				}
 			}
 		}
 
-		if (melhorou) {
-			memcpy(&s, &melhor_vizinho, sizeof(Solucao));
-			continue; 
-		}
-				
+		s.fo = melhor_fo_iteracao;
+		if (!melhorou) calcular_fo(s);
+
+		
 		for (int j = 0; j < num_cidades; j++) {
 			int carro_original = s.vet_carro[j];
 
-			for (int i = 0; i < num_carros; i++) {
-				if (i == carro_original) continue;
+			for (int k = 0; k < num_carros; k++) {
+				if (k == carro_original) continue;
 
-				Solucao vizinho = s;
-				vizinho.vet_carro[j] = i;
+				s.vet_carro[j] = k;
 
-				calcular_fo(vizinho);
+				calcular_fo(s);
 
-				if (vizinho.fo < melhor_fo_local) {
-					melhor_fo_local = vizinho.fo;
-					memcpy(&melhor_vizinho, &vizinho, sizeof(Solucao));
+				if (s.fo < melhor_fo_iteracao) {
+					melhor_fo_iteracao = s.fo;
+					memcpy(&melhor_vizinho, &s, sizeof(Solucao));
 					melhorou = 1;
 				}
+				s.vet_carro[j] = carro_original;
 			}
 		}
 
@@ -444,7 +498,6 @@ void heu_MM(Solucao& s) {
 }
 
 void sa(Solucao& s) {
-
 	// inicia
 	Solucao s_melhor;
 	Solucao s_vizinha;
@@ -486,7 +539,6 @@ void sa(Solucao& s) {
 				}
 			}
 		}
-		
 
 		// fica frio ai
 		T *= ALPHA;
@@ -494,4 +546,107 @@ void sa(Solucao& s) {
 
 	// escreve a melhor que achou
 	memcpy(&s, &s_melhor, sizeof(Solucao));
+}
+
+void heu_cons_ale_gul(Solucao& s, const double percentual) {
+	int visitado[MAX_CID];
+	int cand_id[MAX_CID];
+	int cand_custo[MAX_CID];
+	int i, j, k, cont_lista, limite, pos_escolhida;
+	int cidade_atual, prox_cidade, carro_atual, aux_custo, aux_id;
+	int cidade_inicio;
+
+	memset(visitado, 0, sizeof(visitado));
+
+	cidade_inicio = rand() % num_cidades;
+	cidade_atual = cidade_inicio;
+	carro_atual = rand() % num_carros;
+	visitado[cidade_inicio] = 1;
+
+	for (i = 0; i < num_cidades - 1; i++) {
+		s.vet_carro[cidade_atual] = carro_atual;
+
+		cont_lista = 0;
+		for (j = 0; j < num_cidades; j++) {
+			if (visitado[j] == 0) {
+				cand_id[cont_lista] = j;
+				cand_custo[cont_lista] = mat_distancia[carro_atual][cidade_atual][j];
+				cont_lista++;
+			}
+		}
+
+		for (j = 0; j < cont_lista - 1; j++) {
+			for (k = 0; k < cont_lista - j - 1; k++) {
+				if (cand_custo[k] > cand_custo[k + 1]) {
+					// custo
+					aux_custo = cand_custo[k];
+					cand_custo[k] = cand_custo[k + 1];
+					cand_custo[k + 1] = aux_custo;
+
+					// id
+					aux_id = cand_id[k];
+					cand_id[k] = cand_id[k + 1];
+					cand_id[k + 1] = aux_id;
+				}
+			}
+		}
+
+		limite = (int)((percentual / 100.0) * cont_lista);
+		if (limite < 1) limite = 1;
+		pos_escolhida = rand() % limite;
+		prox_cidade = cand_id[pos_escolhida];
+		s.vet_sol[cidade_atual] = prox_cidade;
+		visitado[prox_cidade] = 1;
+ 
+		if (prox_cidade % 2 == 0) {
+			if ((rand() % 100) < 50) { 
+				int novo_carro = rand() % num_carros;
+				if (num_carros > 1) {
+					while (novo_carro == carro_atual) {
+						novo_carro = rand() % num_carros;
+					}
+				}
+				carro_atual = novo_carro;
+			}
+		}
+		cidade_atual = prox_cidade;
+	}
+
+	s.vet_sol[cidade_atual] = cidade_inicio;
+	s.vet_carro[cidade_atual] = carro_atual;
+
+	calcular_fo(s);
+}
+
+void heu_cons_ale(Solucao& s) {
+	int perm[MAX_CID];
+	int i, r, temp;
+
+	memset(&s, 0, sizeof(s));
+
+	for (i = 0; i < num_cidades; i++) {
+		perm[i] = i;
+	}
+
+	for (i = 0; i < num_cidades; i++) {
+		r = rand() % num_cidades;
+		temp = perm[i];
+		perm[i] = perm[r];
+		perm[r] = temp;
+	}
+
+	for (i = 0; i < num_cidades - 1; i++) {
+		int origem = perm[i];
+		int destino = perm[i + 1];
+		s.vet_sol[origem] = destino;
+		s.vet_carro[origem] = rand() % num_carros;
+	}
+
+	int ultima = perm[num_cidades - 1];
+	int primeira = perm[0];
+
+	s.vet_sol[ultima] = primeira;
+	s.vet_carro[ultima] = rand() % num_carros;
+
+	calcular_fo(s);
 }
