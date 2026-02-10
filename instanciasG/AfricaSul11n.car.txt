@@ -1,0 +1,10 @@
+//------------------------------
+  SOLUCAO DO PROBLEMA CaRS
+//------------------------------
+Instancia: instanciasG/AfricaSul11n.car
+FO: 781
+Tempo Total: 20.001000
+Tempo Melhor: 0.084000
+Solucoes: 820459
+
+CaRS: 0 -[1]-> 6 -[1]-> 5 -[1]-> 7 -[1]-> 10 -[0]-> 1 -[0]-> 3 -[0]-> 2 -[0]-> 4 -[1]-> 8 -[2]-> 9 -[2]-> 0 

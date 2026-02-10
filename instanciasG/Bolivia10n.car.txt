@@ -1,0 +1,10 @@
+//------------------------------
+  SOLUCAO DO PROBLEMA CaRS
+//------------------------------
+Instancia: instanciasG/Bolivia10n.car
+FO: 825
+Tempo Total: 20.001000
+Tempo Melhor: 0.048000
+Solucoes: 1084299
+
+CaRS: 0 -[0]-> 1 -[0]-> 3 -[0]-> 2 -[1]-> 8 -[1]-> 9 -[1]-> 4 -[2]-> 6 -[2]-> 5 -[2]-> 7 -[2]-> 0 

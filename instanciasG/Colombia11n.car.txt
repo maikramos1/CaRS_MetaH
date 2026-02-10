@@ -1,0 +1,10 @@
+//------------------------------
+  SOLUCAO DO PROBLEMA CaRS
+//------------------------------
+Instancia: instanciasG/Colombia11n.car
+FO: 639
+Tempo Total: 20.001000
+Tempo Melhor: 0.021000
+Solucoes: 900618
+
+CaRS: 0 -[1]-> 1 -[1]-> 9 -[1]-> 5 -[1]-> 10 -[1]-> 4 -[1]-> 8 -[1]-> 6 -[0]-> 3 -[0]-> 7 -[0]-> 2 -[0]-> 0 

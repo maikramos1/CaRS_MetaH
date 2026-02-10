@@ -19,7 +19,7 @@ const double TEMPERATURA_INICIAL = 3565.2896;
 const double TEMPERATURA_CONGELAMENTO = 0.0351;
 const double TAXA_RESFRIAMENTO = 0.8001;
 const int SA_MAXIMO = 133;
-const int TEMPO_MAXIMO = 20;
+const int TEMPO_MAXIMO = 300;
 
 int main(int argc, char* argv[]) {
 	// pau no cu do formiga
@@ -62,9 +62,7 @@ int main(int argc, char* argv[]) {
 #endif
 
 	Solucao s;
-	int n = 15;
-
-	/*
+	int n = 5;
 	const char* entrada[] = {
 		//Instâncias Não-Euclideanas:
 		//Pequenas
@@ -77,43 +75,6 @@ int main(int argc, char* argv[]) {
 		"Grandes/Brasil16n.car", // 4
 		"Grandes/Russia17n.car" // 5
 	};
-	*/
-
-	const char* entrada[] = {
-		"instanciasG/Mauritania10n.car",
-		"instanciasG/Colombia11n.car",
-		"instanciasG/Angola12n.car",
-		"instanciasG/Peru13n.car",
-		"instanciasG/Libia14n.car",
-		"instanciasG/BrasilRJ14n.car",
-		"instanciasG/Congo15n.car",
-		"instanciasG/Argentina16n.car",
-		"instanciasG/EUA17n.car",
-		"instanciasG/Bolivia10n.car",
-		"instanciasG/AfricaSul11n.car",
-		"instanciasG/Niger12n.car",
-		"instanciasG/Mongolia13n.car",
-		"instanciasG/Indonesia14n.car",
-		"instanciasG/Argelia15n.car",
-		"instanciasG/India16n.car",
-		"instanciasG/China17n.car",
-		"instanciasG/Etiopia10n.car",
-		"instanciasG/Mali11n.car",
-		"instanciasG/Chade12n.car",
-		"instanciasG/Ira13n.car",
-		"instanciasG/Mexico14n.car",
-		"instanciasG/Sudao15n.car",
-		"instanciasG/Australia16n.car",
-		"instanciasG/Canada17n.car",
-		"instanciasG/Arabia14n.car",
-		"instanciasG/Cazaquistao15n.car",
-		"instanciasG/Brasil16n.car",
-		"instanciasG/Russia17n.car"
-	};
-
-
-
-
 	
 	double TEMPO_TOTAL = 0;
 	double TEMPO_MELHOR = 0;
@@ -159,23 +120,10 @@ int main(int argc, char* argv[]) {
 	printf("SA com anabolizantes");
 	escrever_solucao("saida.txt", s, entrada[n]);
 	*/
-	for (int i = 0; i < 28; i++) {
-		lerDados(entrada[i]);
-		memset(&s, 0, sizeof(Solucao));
-		heu_cons_ale_gul(s, 0.3);
-		sa(s, TEMPERATURA_INICIAL, TEMPERATURA_CONGELAMENTO, TAXA_RESFRIAMENTO, SA_MAXIMO, TEMPO_MAXIMO, TEMPO_TOTAL, TEMPO_MELHOR, NUMERO_SOLUCOES);
-		char nome_arquivo[100];
-		sprintf(nome_arquivo, "%s.txt", entrada[i]);
-		escrever_solucao(nome_arquivo, s, entrada[i], TEMPO_TOTAL, TEMPO_MELHOR, NUMERO_SOLUCOES);
-	}
-	/*
 	heu_cons_ale_gul(s, 0.3);
 	sa(s, TEMPERATURA_INICIAL, TEMPERATURA_CONGELAMENTO, TAXA_RESFRIAMENTO, SA_MAXIMO, TEMPO_MAXIMO, TEMPO_TOTAL, TEMPO_MELHOR, NUMERO_SOLUCOES);
-
-	char nome_arquivo[100];
-	sprintf(nome_arquivo, "%s.txt", entrada[n]);
-	escrever_solucao(nome_arquivo, s, entrada[n], TEMPO_TOTAL, TEMPO_MELHOR, NUMERO_SOLUCOES);
-	*/
+	escrever_solucao("saida.txt", s, entrada[n], TEMPO_TOTAL, TEMPO_MELHOR, NUMERO_SOLUCOES);
+	
 
 	return 0;
 }
