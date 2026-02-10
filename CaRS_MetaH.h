@@ -23,11 +23,10 @@ void lerDados(const char* arq);
 void testarDados(const char* arq);
 void solucao_mauritania(Solucao& s);
 void solucao_bolivia(Solucao& s);
-void gerar_vizinha(Solucao& s);
+void gerar_vizinha(Solucao& s, int flag);
 void calcular_fo(Solucao& s);
 void escrever_solucao(const char* arq_solucao, Solucao s);
-void heu_cons_ale(Solucao& s);
-void heu_cons_gul(Solucao& s);
-void heu_cons_ale_gul(Solucao& s, const double& percentual);
+void heu_MM(Solucao& s);
+void sa(Solucao& s);
 
 #endif 

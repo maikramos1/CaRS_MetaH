@@ -1,10 +1,17 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string.h>
+#include <cstdlib>
+#include <memory.h>
 #include "CaRS_MetaH.h"
 
 #define MAX(X,Y)((X > Y) ? (X) : (Y))
 #define MIN(X,Y)((X < Y) ? (X) : (Y))
+
+const double TEMPERATURA_INICIAL = 1000.0;
+const double TEMPERATURA_FINAL = 0.01;
+const double ALPHA = 0.98; // Taxa de resfriamento
+const int ITER_POR_TEMP = 100;
 
 int main(void) {
 
@@ -23,18 +30,23 @@ int main(void) {
 		"Grandes/Russia17n.car"
 	};
 
-	lerDados(entrada[0]);
+	lerDados(entrada[1]);
 
 	//testarDados(" ");
 	
-	solucao_mauritania(s);
-	printf("mauritania");
-	escrever_solucao("saida.txt", s);
+	//solucao_mauritania(s);
+	//printf("mauritania");
+	//escrever_solucao("saida.txt", s);
 
 	printf("bolivia");
 	solucao_bolivia(s);
+	//gerar_vizinha(s,rand()%3);
+	calcular_fo(s);
+	//original
 	escrever_solucao("saida.txt", s);
-
+	
+	//sa(s);
+	//escrever_solucao("saida.txt", s);
 
 
 	return 0;
@@ -133,8 +145,38 @@ void testarDados(const char* arq) {
 		fclose(f);
 }
 
-void gerar_vizinha(Solucao& s) {
-	
+void gerar_vizinha(Solucao& s, int flag) {
+	if (flag == 1 || 3) {
+		//troca carro
+		int cidade = rand() % num_cidades;
+		int carro = rand() % num_carros;
+		while (carro == s.vet_carro[cidade]) {
+			carro = rand() % num_carros;
+		}
+		s.vet_carro[cidade] = carro;
+	}
+	else if (flag == 2 || flag == 3){
+		
+		//troca cidade
+		//fui burro e agora vou ter que empurrar o vetor inteiro
+		int origem = rand() % num_cidades;
+		int destino = rand() % num_cidades;
+
+		while (origem == destino) {
+			destino = rand() % num_cidades;
+		}
+
+		int cidade_movida = s.vet_sol[origem];
+
+		// Desloca para a esquerda <<<<<
+		if (origem < destino) for (int i = origem; i < destino; i++) s.vet_sol[i] = s.vet_sol[i + 1];
+
+		// Desloca para a direita >>>>>
+		else for (int i = origem; i > destino; i--) s.vet_sol[i] = s.vet_sol[i - 1];
+		
+		s.vet_sol[destino] = cidade_movida;
+		
+	}
 };
 
 void calcular_fo(Solucao& s) {
@@ -186,6 +228,9 @@ void calcular_fo(Solucao& s) {
 
 		cidade_atual = proxima_cidade;
 		conta++;
+	}
+	if (conta < num_cidades) {
+		s.fo += 1000000; // Penalidade alta para inviabilizar a solução
 	}
 };
 
@@ -341,3 +386,112 @@ void solucao_bolivia(Solucao& s) {
 	s.vet_carro[7] = 2;
 	calcular_fo(s);
 };
+
+void heu_MM(Solucao& s) {
+	int melhorou = 1;
+	Solucao melhor_vizinho;
+	Solucao vizinho;
+	memcpy(&melhor_vizinho, &s, sizeof(Solucao));
+	memcpy(&vizinho, &s, sizeof(Solucao));
+
+	while (melhorou) {
+		melhorou = 0;
+		int melhor_fo_local = s.fo;
+
+		// troca todas as cidades
+		for (int i = 0; i < num_cidades - 1; i++) {
+			for (int j = i + 1; j < num_cidades; j++) {
+				int aux = vizinho.vet_sol[i];
+				vizinho.vet_sol[i] = vizinho.vet_sol[j];
+				vizinho.vet_sol[j] = aux;
+				calcular_fo(vizinho);
+				if (vizinho.fo < melhor_fo_local) {
+					melhor_fo_local = vizinho.fo;
+					memcpy(&melhor_vizinho, &vizinho, sizeof(Solucao));
+					melhorou = 1;
+				}
+			}
+		}
+
+		if (melhorou) {
+			memcpy(&s, &melhor_vizinho, sizeof(Solucao));
+			continue; 
+		}
+				
+		for (int j = 0; j < num_cidades; j++) {
+			int carro_original = s.vet_carro[j];
+
+			for (int i = 0; i < num_carros; i++) {
+				if (i == carro_original) continue;
+
+				Solucao vizinho = s;
+				vizinho.vet_carro[j] = i;
+
+				calcular_fo(vizinho);
+
+				if (vizinho.fo < melhor_fo_local) {
+					melhor_fo_local = vizinho.fo;
+					memcpy(&melhor_vizinho, &vizinho, sizeof(Solucao));
+					melhorou = 1;
+				}
+			}
+		}
+
+		if (melhorou) {
+			memcpy(&s, &melhor_vizinho, sizeof(Solucao));
+		}
+	}
+}
+
+void sa(Solucao& s) {
+
+	// inicia
+	Solucao s_melhor;
+	Solucao s_vizinha;
+	memset(&s_melhor, 0, sizeof(Solucao));
+	memset(&s_vizinha, 0, sizeof(Solucao));
+	memcpy(&s_melhor, &s, sizeof(Solucao));
+
+	double T = TEMPERATURA_INICIAL;
+
+	while (T > TEMPERATURA_FINAL) {
+
+		for (int i = 0; i < ITER_POR_TEMP; i++) {
+			memset(&s_vizinha, 0, sizeof(Solucao));
+			memcpy(&s_vizinha, &s, sizeof(Solucao));
+
+			// pedra, papel ou tesoura
+			gerar_vizinha(s_vizinha, rand() % 3);
+			calcular_fo(s_vizinha);
+			double delta = s_vizinha.fo - s.fo;
+
+			if (delta < 0) {
+				// aceita
+				memcpy(&s, &s_vizinha, sizeof(Solucao));
+
+				if (s.fo < s_melhor.fo) {
+					memcpy(&s_melhor, &s, sizeof(Solucao));
+					//nova melhor solucao
+					//printf("FO: %d\n", s_melhor.fo);
+					escrever_solucao("saida.txt", s_melhor);
+				}
+			}
+			else {
+				// Aceita piora, probabilidade e^(-delta/T)
+				double prob = exp(-delta / T);
+				double r = ((double)rand() / (RAND_MAX));
+
+				if (r < prob) {
+					memcpy(&s, &s_vizinha, sizeof(Solucao));
+				}
+			}
+		}
+		
+
+		// fica frio ai
+		T *= ALPHA;
+	}
+
+	// escreve a melhor que achou
+	memcpy(&s, &s_melhor, sizeof(Solucao));
+}
