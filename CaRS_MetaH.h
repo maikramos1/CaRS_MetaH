@@ -25,9 +25,9 @@ void solucao_mauritania(Solucao& s);
 void solucao_bolivia(Solucao& s);
 void gerar_vizinha(Solucao& s, int flag);
 void calcular_fo(Solucao& s);
-void escrever_solucao(const char* arq_solucao, Solucao s, const char* string);
+void escrever_solucao(const char* arq_solucao, Solucao s, const char* string, double TEMPO_TOTAL, double TEMPO_MELHOR, int NUMERO_SOLUCOES);
 void heu_MM(Solucao& s);
-void sa(Solucao& s, int TEMPO_TOTAL, int TEMPO_MELHOR, int NUMERO_SOLUCOES);
+void sa(Solucao& s,	double TEMPERATURA_INICIAL, double TEMPERATURA_CONGELAMENTO, double TAXA_RESFRIAMENTO, int SA_MAXIMO, double TEMPO_MAXIMO, double &TEMPO_TOTAL, double &TEMPO_MELHOR, int &NUMERO_SOLUCOES);
 void heu_cons_ale_gul(Solucao& s, const double percentual);
 void heu_cons_ale(Solucao& s);
 #endif 

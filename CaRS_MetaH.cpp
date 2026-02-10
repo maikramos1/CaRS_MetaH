@@ -7,19 +7,62 @@
 #include <omp.h>
 #include <memory.h>
 #include "CaRS_MetaH.h"
+#include <string>
+#include <iostream>
 
 #define MAX(X,Y)((X > Y) ? (X) : (Y))
 #define MIN(X,Y)((X < Y) ? (X) : (Y))
 
-const double TEMPERATURA_INICIAL = 1000.0;
-const double TEMPERATURA_CONGELAMENTO = 0.01;
-const double TAXA_RESFRIAMENTO = 0.98;
-const int SA_MAXIMO = 100;
-const int TEMPO_MAXIMO = 100;
+//#define IRACE_MODE
 
-int main(void) {
+const double TEMPERATURA_INICIAL = 3565.2896;
+const double TEMPERATURA_CONGELAMENTO = 0.0351;
+const double TAXA_RESFRIAMENTO = 0.8001;
+const int SA_MAXIMO = 133;
+const int TEMPO_MAXIMO = 300;
+
+int main(int argc, char* argv[]) {
+	// pau no cu do formiga
+#ifdef IRACE_MODE
+	double arg_TI = 1418.49;
+	double arg_TC = 0.79;
+	double arg_TR = 0.8976;
+	int arg_SAMAX = 100;
+	double arg_TEM_MAX = 30.00;
+
+	double TEMPO_TOTAL = 0.00, TEMPO_MELHOR = 0.00;
+	int NUMERO_SOLUCOES = 0;
+
+	int seed = 123456;
+	std::string instance_path = "instancias/Mauritania10n.car";
+
+	for (int i = 1; i < argc; i++) {
+		std::string arg = argv[i];
+		if (arg == "--ti" && i + 1 < argc) arg_TI = std::atof(argv[++i]);
+		else if (arg == "--tc" && i + 1 < argc) arg_TC = std::atof(argv[++i]);
+		else if (arg == "--tr" && i + 1 < argc) arg_TR = std::atof(argv[++i]);
+		else if (arg == "--samax" && i + 1 < argc) arg_SAMAX = std::atoi(argv[++i]);
+		else if (arg == "--seed" && i + 1 < argc) seed = std::atoi(argv[++i]);
+		else if ((arg == "--instancia" || arg == "-i") && i + 1 < argc) instance_path = argv[++i];
+	}
+
+	srand(seed);
+
+	lerDados(instance_path.c_str());
+
+	if (arg_SAMAX == 0) arg_SAMAX = 2 * num_cidades;
+
 	Solucao s;
-	int n = 0;
+
+	heu_cons_ale_gul(s, 0.3);
+
+	sa(s, arg_TI, arg_TC, arg_TR, arg_SAMAX, arg_TEM_MAX, TEMPO_TOTAL, TEMPO_MELHOR, NUMERO_SOLUCOES);
+
+	std::cout << s.fo << " " << (int)TEMPO_TOTAL << std::endl;
+#endif
+
+	Solucao s;
+	int n = 5;
 	const char* entrada[] = {
 		//Instâncias Não-Euclideanas:
 		//Pequenas
@@ -33,9 +76,11 @@ int main(void) {
 		"Grandes/Russia17n.car" // 5
 	};
 	
-	int TEMPO_TOTAL = 0;
-	int TEMPO_MELHOR = 0;
+	double TEMPO_TOTAL = 0;
+	double TEMPO_MELHOR = 0;
 	int NUMERO_SOLUCOES = 0;
+
+	srand(time(NULL));
 
 	lerDados(entrada[n]);
 	//testarDados(" ");
@@ -69,19 +114,16 @@ int main(void) {
 	sa(s);
 	printf("SA sem busca local");
 	escrever_solucao("saida.txt", s);
-	*/
+	
 	heu_cons_ale_gul(s, 0.3);
 	sa(s,TEMPO_TOTAL,TEMPO_MELHOR,NUMERO_SOLUCOES);
 	printf("SA com anabolizantes");
 	escrever_solucao("saida.txt", s, entrada[n]);
+	*/
+	heu_cons_ale_gul(s, 0.3);
+	sa(s, TEMPERATURA_INICIAL, TEMPERATURA_CONGELAMENTO, TAXA_RESFRIAMENTO, SA_MAXIMO, TEMPO_MAXIMO, TEMPO_TOTAL, TEMPO_MELHOR, NUMERO_SOLUCOES);
+	escrever_solucao("saida.txt", s, entrada[n], TEMPO_TOTAL, TEMPO_MELHOR, NUMERO_SOLUCOES);
 	
-
-
-
-	
-	//sa(s);
-	//escrever_solucao("saida.txt", s);
-
 
 	return 0;
 }
@@ -268,20 +310,34 @@ void calcular_fo(Solucao& s) {
 	}
 };
 
-void escrever_solucao(const char* arq_solucao, Solucao s, const char* string) {
+void escrever_solucao(const char* arq_solucao, Solucao s, const char* string, double TEMPO_TOTAL, double TEMPO_MELHOR, int NUMERO_SOLUCOES) {
 		FILE* f;
 		FILE* g;
 		f = stdout;
 		g = fopen(arq_solucao, "w");
 
-		fprintf(f, "\n//------------------------------\n");
-		fprintf(f, "  SOLUCAO DO PROBLEMA CaRS %s\n", string);
-		fprintf(f, "//------------------------------\n\n");
+		fprintf(f, "//------------------------------\n");
+		fprintf(f, "  SOLUCAO DO PROBLEMA CaRS\n");
+		fprintf(f, "//------------------------------\n");
+		
 		fprintf(g, "//------------------------------\n");
-		fprintf(g, "  SOLUCAO DO PROBLEMA CaRS %s\n", string);
-		fprintf(g, "//------------------------------\n\n");
-		fprintf(f, "Valor da Funcao Objetivo: %d\n\n", s.fo);
-		fprintf(g, "Valor da Funcao Objetivo: %d\n\n", s.fo);
+		fprintf(g, "  SOLUCAO DO PROBLEMA CaRS\n");
+		fprintf(g, "//------------------------------\n");
+
+		fprintf(f, "Instancia: %s\n", string);
+		fprintf(g, "Instancia: %s\n", string);
+		fprintf(f, "FO: %d\n", s.fo);
+		fprintf(g, "FO: %d\n", s.fo);
+		
+		fprintf(f, "Tempo Total: %f\n", TEMPO_TOTAL);
+		fprintf(g, "Tempo Total: %f\n", TEMPO_TOTAL);
+
+		fprintf(f, "Tempo Melhor: %f\n", TEMPO_MELHOR);
+		fprintf(g, "Tempo Melhor: %f\n", TEMPO_MELHOR);
+
+		fprintf(f, "Solucoes: %d\n\n", NUMERO_SOLUCOES);
+		fprintf(g, "Solucoes: %d\n\n", NUMERO_SOLUCOES);
+
 		fprintf(f, "CaRS: ");
 		fprintf(g, "CaRS: ");
 
@@ -510,60 +566,79 @@ void heu_MM(Solucao& s) {
 	calcular_fo(s);
 }
 
-void sa(Solucao& s, int TEMPO_TOTAL, int TEMPO_MELHOR, int NUMERO_SOLUCOES) {
+void sa(Solucao& s, 
+	double TEMPERATURA_INICIAL, 
+	double TEMPERATURA_CONGELAMENTO, 
+	double TAXA_RESFRIAMENTO,
+	int SA_MAXIMO,
+	double TEMPO_MAXIMO,
+	double &TEMPO_TOTAL,
+	double &TEMPO_MELHOR,
+	int &NUMERO_SOLUCOES) {
 	// inicia
 	Solucao s_melhor;
 	Solucao s_vizinha;
 	memset(&s_melhor, 0, sizeof(Solucao));
 	memset(&s_vizinha, 0, sizeof(Solucao));
 	memcpy(&s_melhor, &s, sizeof(Solucao));
+	clock_t h = clock();
+	TEMPO_TOTAL = 0.00;
+	TEMPO_MELHOR = 0.00;
+	NUMERO_SOLUCOES = 1;
 
+INICIO:;
 	double T = TEMPERATURA_INICIAL;
+	
+	while (1) {
 
-	while (T > TEMPERATURA_CONGELAMENTO) {
+		while (T > TEMPERATURA_CONGELAMENTO) {
 
-		for (int i = 0; i < SA_MAXIMO; i++) {
-			memset(&s_vizinha, 0, sizeof(Solucao));
-			memcpy(&s_vizinha, &s, sizeof(Solucao));
+			for (int i = 0; i < SA_MAXIMO; i++) {
+				memset(&s_vizinha, 0, sizeof(Solucao));
+				memcpy(&s_vizinha, &s, sizeof(Solucao));
 
-			// pedra, papel ou tesoura
-			gerar_vizinha(s_vizinha, rand() % 3);
-			//====================================================================================================
-			// Injeção de anabolizante para o SA
-			//====================================================================================================
-			heu_MM(s_vizinha);
-			//====================================================================================================
-			//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-			//====================================================================================================
-			calcular_fo(s_vizinha);
-			double delta = s_vizinha.fo - s.fo;
-
-			if (delta < 0) {
-				// aceita
-				memcpy(&s, &s_vizinha, sizeof(Solucao));
-
-				if (s.fo < s_melhor.fo) {
-					memcpy(&s_melhor, &s, sizeof(Solucao));
-					//nova melhor solucao
-					//printf("FO: %d\n", s_melhor.fo);
-					//escrever_solucao("saida.txt", s_melhor);
-				}
-			}
-			else {
-				// Aceita piora, probabilidade e^(-delta/T)
-				double prob = exp(-delta / T);
-				double r = ((double)rand() / (RAND_MAX));
-
-				if (r < prob) {
+				// pedra, papel ou tesoura
+				gerar_vizinha(s_vizinha, rand() % 3);
+				//====================================================================================================
+				// Injeção de anabolizante para o SA
+				//====================================================================================================
+				heu_MM(s_vizinha);
+				//====================================================================================================
+				//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+				//====================================================================================================
+				calcular_fo(s_vizinha);
+				NUMERO_SOLUCOES++;
+				double delta = s_vizinha.fo - s.fo;
+				if (delta < 0) {
+					// aceita
 					memcpy(&s, &s_vizinha, sizeof(Solucao));
+
+					if (s.fo < s_melhor.fo) {
+						TEMPO_MELHOR = (double)(clock() - h) / CLOCKS_PER_SEC;
+						memcpy(&s_melhor, &s, sizeof(Solucao));
+						//nova melhor solucao
+						//escrever_solucao("saida.txt", s_melhor);
+					}
 				}
+				else {
+					// Aceita piora, probabilidade e^(-delta/T)
+					double prob = exp(-delta / T);
+					double r = ((double)rand() / (RAND_MAX));
+					if (r < prob) {
+						memcpy(&s, &s_vizinha, sizeof(Solucao));
+					}
+				}
+				TEMPO_TOTAL = (double)(clock() - h) / CLOCKS_PER_SEC;
+				if (TEMPO_TOTAL > TEMPO_MAXIMO) goto FIM;
 			}
+			// fica frio ai
+			T *= TAXA_RESFRIAMENTO;
 		}
-
-		// fica frio ai
-		T *= TAXA_RESFRIAMENTO;
+		TEMPO_TOTAL = (double)(clock() - h) / CLOCKS_PER_SEC;
+		if (TEMPO_TOTAL > TEMPO_MAXIMO) goto FIM;
+		else goto INICIO;
 	}
-
+FIM:;
 	// escreve a melhor que achou
 	memcpy(&s, &s_melhor, sizeof(Solucao));
 }
