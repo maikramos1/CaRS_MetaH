@@ -1,0 +1,683 @@
+   MODELO MATEMÁTICO E ALGORITMO MEMÉTICO PARA UMA
+          VARIANTE DO PROBLEMA DO CAIXEIRO ALUGADOR
+
+                                          Francisco Rodrigues Lima
+                                                       UFRN
+
+                        Campus Universitário Lagoa Nova, Natal - RN, 59078-900
+                                francisco.lima.263@ufrn.edu.br
+
+                                          Matheus da Silva Menezes
+                                                       UFRN
+
+                        Campus Universitário Lagoa Nova, Natal - RN, 59078-900
+                                       matheus.menezes@ufrn.br
+
+                                     Sílvia Maria Diniz Monteiro Maia
+                                                       UFRN
+
+                        Campus Universitário Lagoa Nova, Natal - RN, 59078-900
+                                         silvia@dimap.ufrn.br
+
+                                                  Ivan Mezzomo
+                                                      UFERSA
+
+                       R. Francisco Mota, 572 - Pres. Costa e Silva, Mossoró - RN
+                                       stefeson@ufersa.edu.br
+
+                                           Gustavo de Araújo Sabry
+                                                        IFPB
+
+                      R. Pres. Tancredo Neves, s/n - Jardim Sorrilandia, Sousa - PB
+                                       guga_sabry@hotmail.com
+
+                                                     RESUMO
+              O Problema do Caixeiro Alugador ou The Traveling Car Renter Problem (CaRS) é
+uma generalização do Problema do Caixeiro Viajante (PCV) onde o percurso pode ser realizado
+utilizando diferentes carros alugados, também caracterizado como NP-Difícil. Todos os trabalhos
+relatados na literatura abordaram o problema sob a mesma ótica, onde o mesmo carro não pode
+ser alugado mais de uma vez, o carro alugado pode ser devolvido em qualquer cidade e existe uma
+cidade pré-definida para o início e final do percurso, denominada cidade base. Este artigo analisa
+o problema através da modificação destas características. O modelo matemático do problema é
+ajustado para considerar essa variação e é implementado em um solver, produzindo resultados para
+cinquenta e oito instâncias do problema. Um algoritmo memético é proposto, com buscas locais
+adequadas à variação do problema. O desempenho computacional do algoritmo memético proposto
+é comparado com a performance do solver.
+
+PALAVRAS CHAVE. Problema do Caixeiro Alugador, Metaheurísticas, Programação Inteira
+Mista, Algoritmo Memético.
+
+Tópicos (indique, em ordem de PRIORIDADE, o(s) tópicos(s) de seu artigo):MH ­ Metaheu-
+rísticas , L&T ­ Logística e Transportes.
+
+                                                                                                                        DOI: 10.59254/sbpo-2025-212586
+                                                                                                    https://proceedings.science/p/212586?lang=pt-br
+                                                   ABSTRACT
+             The Traveling Car Renter Problem (CaRS) is a generalization of the Traveling Salesman
+Problem (TSP) where the route can be completed using different rental cars, also characterized as
+NP-Hard. All the works reported in the literature approached the problem from the same perspec-
+tive, where the same car cannot be rented more than once, the rental car can be returned in any city
+and there is a predefined city for the start and end of the route, called the base city. This paper
+analyzes the problem by modifying these characteristics. The mathematical model of the problem
+is adjusted to consider this variation and is implemented in a solver, producing results for fifty-eight
+instances of the problem. A memetic algorithm is proposed, with local searches appropriate to the
+variation of the problem. The computational performance of the proposed memetic algorithm is
+compared with the performance of the solver.
+KEYWORDS. Traveling Car Renter Problem. Metaheuristics. Mixed Integer Programming.
+Memetic Algorithm.
+Paper topics (indicate in order of PRIORITY the paper topic(s)): MH ­ Metaheuristics , L&T
+­ Logistic and Transport.
+
+                                                                                                                        DOI: 10.59254/sbpo-2025-212586
+                                                                                                    https://proceedings.science/p/212586?lang=pt-br
+1. Introdução
+
+           Este artigo aborda uma variação para o Problema do Caixeiro Alugador (CaRS), problema
+este introduzido em [Goldbarg et al., 2012]. O problema CaRS é uma generalização do Problema
+do Caixeiro Viajante (PCV) que tem como objetivo minimizar os custos de percorrer n cidades,
+cujo trajeto pode ser realizado utilizando carros alugados. Desde que o PCV é NP-Difícil, [Gutin
+e Punnen, 2002] e é um caso especial do CaRS, quando apenas um carro é utilizado no percurso,
+então o CaRS é também classificado como NP-Difícil.
+
+           O mercado de aluguel de veículos tem se consolidado como uma peça-chave no setor
+de mobilidade urbana e logística, oferecendo soluções flexíveis e sob demanda para indivíduos e
+empresas. Com o avanço das tecnologias digitais e o crescimento do modelo de consumo baseado
+em acesso ao invés de posse, o aluguel de carros tornou-se uma alternativa estratégica frente aos
+custos e à responsabilidade associados à propriedade de veículos. De acordo com um relatório
+da Mordor Intelligence (2024), espera-se que o mercado global de aluguel de carros cresça a uma
+taxa composta anual de aproximadamente 7% entre 2024 e 2029, impulsionado principalmente pelo
+turismo, pelo crescimento da economia colaborativa e pela demanda por serviços sob demanda em
+áreas urbanas densamente povoadas [Mordor Intelligence, 2024].
+
+           No problema geral do CaRS, existem diversas opções de locação de carros, a partir de
+diferentes empresas, disponíveis em cada cidade. Carros diferentes possuem custos diferentes para
+percorrer a rota. Estes custos podem ser considerados como o custo de locação, consumo de com-
+bustível e pagamento de pedágios. Além disso, se um carro é locado em uma cidade e devolvido em
+uma diferente, o usuário precisa considerar o pagamento de uma taxa de retorno para devolução do
+veículo para sua cidade de origem. O problema consiste ainda em visitar um conjunto de cidades,
+começando e terminando o tour no mesmo local, visitando todas as cidades e minimizando o custo
+de percorrer o caminho usando os carros locados.
+
+           O problema CaRS foi objeto de estudo em algumas pesquisas recentes, onde foram con-
+sideradas diferentes abordagens para resolução do problema.
+
+           Em termos de estratégias de solução exata, em [Goldbarg et al., 2012] foi implementado
+um backtracking para resolver o problema, cujo tempo de execução variou de 1 segundo para en-
+contrar a solução ótima de um problema com dez cidades e dois carros disponíveis para locação, até
+88 dias para encontrar a solução de um problema com dezesseis cidades e dois carros para locação,
+mostrando-se ineficiente em termos de encontrar resultados em um tempo computacional razoável.
+No trabalho de [Goldbarg et al., 2013] foi apresentado um modelo de programação quadrática com
+variáveis inteiras e implementado em um solver, com tempo de processamento limitado a 70.000
+segundos, encontrando a solução ótima para dezoito pequenas instâncias. Destacamos que apesar
+da corretude dos resultados, o modelo apresentado no artigo estava incompleto. Nesse sentido, o
+trabalho de [da Silva e Ochi, 2016], apresentou uma tentativa de reformulação do modelo, porém
+este estava incorreto. A correção das formulações se deu em [Rios et al., 2021], destacando os erros
+da proposta de [da Silva e Ochi, 2016]. No trabalho de [Goldbarg et al., 2017] foram propostos
+três modelos para o CaRS, executados em três solvers distintos. Dois dos modelos apresentados
+possuem função objetivo quadrática e um modelo com restrição quadrática, apresentando também
+soluções de linearização para estes casos. Finalmente, em [Lacroix et al., 2021] foi desenvolvido
+um modelo baseado em coloração de vértices, apresentando novos limites para o problema.
+
+           Já em relação às abordagens metaheurísticas, foi propposto em [Goldbarg et al., 2012] um
+algoritmo GRASP(Greedy Randomized Search Procedure) com VNS (Variable Neighborhood Se-
+arch) e um algoritmo memético, encontrando limites superiores para quarenta instâncias do CaRS. O
+algoritmo memético apresentou desempenho superior ao GRASP. Em [Goldbarg et al., 2013] foram
+utilizados um algoritmo memético e um algoritmo transgenético para resolver sessenta instâncias do
+
+                                                                                                                        DOI: 10.59254/sbpo-2025-212586
+                                                                                                    https://proceedings.science/p/212586?lang=pt-br
+problema, com o algoritmo transgenético obtendo melhor performance do que o algoritmo memé-
+tico. No trabalho de [da Silva e Ochi, 2016], são apresentados um algoritmo evolucionário híbrido
+e o um método híbrido denominado Adaptive Local Search Procedure (ALSP), apresentando bons
+resultados para instâncias não euclidianas. Em [Felipe et al., 2014] são utilizados Algoritmos Cien-
+tíficos Scientific Algorithms uma nova metaheurística inspirada no processo de pesquisa científica,
+e adaptado ao problema CaRS, obtendo bom desempenho tanto em tempo de execução quanto em
+qualidade das soluções encontradas.
+
+           Uma variante do problema CaRS, chamada Problema do Caixeiro Alugador com Co-
+leta de Bônus ou Prize Collecting Traveling Car Renter Problem (p-CaRS), foi apresentada em
+[da Silva Menezes et al., 2014]. Nesta variação do problema, a cada cidade é associado um valor
+de bônus (ou satisfação presumida de visitação). O objetivo é determinar um ciclo que garanta a
+visitação de alguns vértices, coletando, pelo menos, um bônus mínimo pré-definido e minimizando
+o custo de percorrer o trajeto com os diferentes veículos alugados. Uma formulação matemática
+para esta variação do problema é apresentada e implementada em um solver produzindo resultados
+para sessenta e quatro instâncias. Também é proposto um algoritmo memético cujo desempenho é
+superior aos resultados obtidos pelo solver, tanto em relação ao tempo de processamento, quanto
+em relação à qualidade de solução.
+
+           Outra variante, proposta em [de Araujo Sabry et al., 2020], é denominada como o Pro-
+blema do Caixeiro Alugador com Passageiros Traveling Car Renter with Passengers (CaRSP), onde,
+durante o tour do caixeiro, os passageiros podem pegar uma carona no carro do caixeiro e dividir
+as despesas da viagem com o motorista. Os passageiros têm diferentes pontos de embarque e de-
+sembarque e dividem os custos da parte da viagem em que estão no veículo. São apresentadas duas
+formulações de programação inteira mista para o CaRSP.
+
+           A maioria dos estudos existentes na literatura aborda uma única variante do problema
+CaRS, na qual o veículo alugado pode ser devolvido em qualquer cidade (devolução irrestrita), não
+é permitido alugar o mesmo tipo de carro mais de uma vez no trajeto (sem repetição) e o percurso
+deve começar e terminar em uma cidade fixa, denominada cidade base. Este artigo propõe uma nova
+variante do problema CaRS, mais alinhada à realidade prática, onde tais restrições são relaxadas:
+não há exigência de cidade base, o mesmo tipo de carro pode ser alugado múltiplas vezes ao longo
+do trajeto, e a devolução dos veículos é permitida apenas em um subconjunto específico de cidades.
+É apresentada uma formulação matemática para esta nova versão, implementada com o auxílio do
+solver GLPK. Além disso, propõe-se um algoritmo memético para a resolução do problema, cuja
+performance é avaliada em 58 instâncias, com os resultados comparados àqueles obtidos pelo solver
+exato.
+
+           Além desta introdução, o presente artigo está assim organizado: a seção 2 contempla a
+definição do problema do caixeiro alugador; na secção3 temos a apresentação do algortimo memé-
+tico proposto, enquanto a seção 4 contempla a metodologia dos experimentos que serão realizados.
+Os resultados e discussões são contemplados na seção 5. Finalmente, as considerações finais são
+apresentadas na seção 6.
+
+2. Uma Variante do Problema do Caixeiro Alugador
+           Na literatura, todos os trabalhos relatados investigam a mesma variante do problema
+
+CaRS, tal como foi proposto em [Goldbarg et al., 2012]. A alternativa de devolução do carro é
+irrestrita, onde o carro locado pode ser devolvido em qualquer cidade. A integridade do contrato
+não permite que o mesmo tipo de carro seja alugado mais que uma vez durante o trajeto, chamada
+de sem repetição. Finalmente, o modelo define a cidade base do caixeiro, uma cidade fixa, onde o
+percurso deve começar e terminar (por convenção do problema, é o primeiro vértice da instância).
+
+           Este artigo apresenta um cenário diferente para o problema CaRS, onde essas condições
+
+                                                                                                                        DOI: 10.59254/sbpo-2025-212586
+                                                                                                    https://proceedings.science/p/212586?lang=pt-br
+são modificadas, buscando um cenário alternativo para o problema. Na prática, o usuário pode não
+
+ter uma cidade fixa para o início do trajeto, as empresas de aluguel não necessariamente aplicam
+
+restrições sobre alugar o mesmo tipo de carro e não temos garantia de que todas as cidades estão
+
+aptas a receber a devolução de veículos.
+
+           Neste sentido, a versão em estudo para o problema, pressupõe que o mesmo tipo de carro
+
+pode ser locado mais de uma vez durante o trajeto, não existe uma cidade base pré-definida e
+
+são aplicadas restrições de devolução do carro alugado, onde o mesmo só pode ser devolvido em
+
+algumas cidades pré-definidas do percurso.
+           Seja G = (V, A) um grafo completo onde V é um conjunto com n nós (cidades) e A é
+
+um conjunto de arcos (estradas ligando as cidades). Neste problema, C representa o conjunto de
+
+carros. Todos os carros estão disponíveis para aluguel em todas as cidades. O custo para o carro
+c  C percorrer a aresta (i, j)  A é denotado por dicj. Se um carro c  C é locado em uma cidade
+i e devolvido em uma cidade j, i = j, uma taxa para retornar o carro c de volta para a cidade i,
+icj deve ser considerada. Além disso, nesta versão do problema, um carro locado em uma cidade
+i e retornado em uma cidade j, i = j pode ser locado novamente em outra parte do trajeto. Em
+
+relação à restrição de devolução, de forma a aproveitar as instâncias existentes sem a necessidade
+
+de modificações, foi considerado que os carros só podem ser devolvidos em cidades que possuam
+índice ímpar. A formulação matemática considera ainda as seguintes variáveis binárias: ficj com
+valor 1 quando o carro c percorre a aresta (i, j) de i para j e 0 caso contrário; wicj com valor 1
+quanto o carro c é alugado em uma cidade j e devolvido em uma cidade i; aic com valor 1 quando o
+carro c é locado em uma cidade i; eci com valor 1 quando o carro c é devolvido na cidade i.
+
+           A seguir é apresentado um modelo para a variante do problema CaRS, baseado na formu-
+lação DFJ para o CaRS apresentada em [Goldbarg et al., 2017]:
+
+min            ficj dicj +           icj wicj                            (1)
+
+     cC ijV                 cC i,jV
+
+          ficj = 1                                     i  V              (2)
+
+cC jV
+
+        ficj = 1                                       j  V              (3)
+
+cC iV
+
+                                                     
+
+aci =          ficj                  fhxi              c  C, i  V        (4)
+
+        jv=V           xCx= c hV
+
+                                                     
+
+eic =          fjci                  fixh              c  C, i  V        (5)
+
+        jv=V        xC,x=c hV
+
+wicj = ajceci                                          c  C, i  V        (6)
+
+          aci  1                                                         (7)
+
+cC iV
+
+2  ui  n                                               i = 2, ..., n     (8)
+
+ui - uj + 1  (n - 1)(1 - ficj)                         i, j = 2, ..., n  (9)
+
+                                                 cC                      (10)
+                                                                         (11)
+ficj , dicj , aicj , eicj  0, 1
+
+vi  
+
+           A equação (1) representa a função objetivo. Ela considera o custo acumulado de percorrer
+as arestas com diferentes carros e os seus respectivos custos relativos ao retorno. As restrições (2)
+e (3) mostram que cada vertice é visitado uma vez e que se um carro chega em um vértice i então
+
+                                                                          DOI: 10.59254/sbpo-2025-212586
+                                                       https://proceedings.science/p/212586?lang=pt-br
+um carro deve deixar aquele vértice. As restrições(4) e (5) controlam o aluguel e a devolução do
+veículo, e foram propostas em Goldbarg et al. [2017]. Dessa forma, a restrição (4) registra se o
+carro c foi locado no nó i enquanto a restrição (5) registra se o carro c foi devolvido no nó i. A
+restrição (6) registra se um carro c foi locado em cidade i e devolvido em uma cidade j. A restrição
+(7) assegura que pelo menos um carro é locado. Restrições (8), (9) proíbem a formação de sub-rotas
+e foram adaptadas da formulação de Miller-Tucker-Zemlin (MTZ) para o PCV [Miller et al., 1960].
+A restrição (10) assegura que as variáveis são binárias e a restrição (11) define que as variáveis ui
+são inteiros positivos.
+
+           As restrições (4)-(6) são quadráticas e suas variáveis são binárias. Para contornar este pro-
+blema, utilizamos a linearização usual [Liberti, 2007]. Uma restrição não linear do tipo apresentado
+em (12), é substituído pelo conjunto de equações (13), (14), (15), (16).
+
+z = x×y                                                           (12)
+
+zx                                                                (13)
+
+zy                                                                (14)
+
+z  x+y-1                                                          (15)
+
+z, x, y  [0, 1]                                                   (16)
+
+           Esta linearização foi implementada no GLPK conforme sugerido em [AIMMS, 2012].
+
+3. Algoritmo Memético Proposto
+
+           Os algoritmos meméticos foram propostos em [Glover e Woolsey, 1974] e tem sido utili-
+zados com sucesso em uma variada gama de aplicações [AIMMS, 2012], incluindo problemas de
+roteamento. O algoritmo memético proposto para esta versão do CaRS é baseado em [da Silva Me-
+nezes et al., 2014] e apresentado no algoritmo 1. Ele recebe como parâmetros de entrada o nome
+da instância inst, o tamanho da população tamP op, a taxa de recombinação #recombina, e o
+percentual da população que deverá compor a elite #elite.
+
+Algorithm 1: Pseudo-código do algoritmo memético proposto
+
+      begin
+           main(inst, tamP op, #recombina, #elite, limitIter)
+           leInstancia(inst)
+           pop[]  geraPopIni(tamP op)
+           numIter  0
+           buscaLocalMultiOper(pop)
+           eliteP op[]  geraPopElite(pop, #elite)
+           while numIter + + < limitIter do
+                of f []  recombina(pop, eliteP op[], #recombina)
+                buscaLocalMultiOper(of f )
+                pop[]  binaryTournament(pop, of f )
+                eliteP op[]  geraPopElite(pop, #elite)
+           end
+
+      end
+
+           Uma representação gráfica para o cromossomo pode ser vista na Figura 1, composta por
+um vetor bi-dimensional, onde o percurso é representado em uma dimensão (superior), e a sequen-
+cia de carros utilizada é representado na outra (inferior). Nesta figura, o cromossomo representa
+
+                                                                                     DOI: 10.59254/sbpo-2025-212586
+                                                                  https://proceedings.science/p/212586?lang=pt-br
+                                          Figura 1: Representação Gráfica do Cromossomo
+
+uma solução onde o carro 2 é contratado na cidade base e entregue na cidade 9, onde o carro 3 é
+contratado e assim por diante.
+
+           A população inicial é gerada a partir do procedimento geraPopIni(), que recebe o ta-
+manho da população tamP op como argumento de entrada. Uma heurística gulosa, adaptada de
+[da Silva Menezes et al., 2014] é usada para gerar os cromossomos da população inicial. A cidade
+inicial i e um carro c1 são escolhidos aleatoriamente. A cidade j onde o carro c1 será devolvido é
+escolhida aleatoriamente. Um caminho entre as cidades i e j é construído, aplicando a heurística
+do vizinho mais próximo, considerando os custos de percurso associados ao carro c1. A cidade j
+é a cidade inicial da próxima parte da rota e um novo carro c2 e uma nova cidade z são sorteados
+aleatoriamente para esta parte do percurso. Claramente, a cidade z não pode ser nenhuma cidade já
+visitada no caminho. Um caminho entre as cidades j e z é construído com as cidades não visitadas.
+O procedimento continua selecionando outra cidade e carro não utilizados enquanto houver cidades
+a serem visitadas.
+
+           O maior desafio dos métodos heurísticos que utilizam busca local é definir estratégias
+eficientes para cobrir o espaço de soluções, explorando regiões promissoras [Ong et al., 2010].
+Nesta versão do problema CaRS, temos duas áreas principais de atuação da busca local: a melhor
+rota e melhor ponto de troca dos veículos. A fase de busca local proposta no algoritmo busca atuar
+de forma consistente nestas áreas, de forma a melhorar as soluções candidatas. A fase de busca local
+é baseada em [Goldbarg et al., 2012; da Silva Menezes et al., 2014] e é executada no procedimento
+buscaLocalMultiOper. Para esta busca, efetuamos novas adaptações nos operadores, procedimentos
+de reparação e ajustes nos procedimentos para explorar a vizinhança da variação do problema em
+estudo, conforme descrito a seguir:
+
+    · invertSol: Este método inverte a ordem de vistiação das cidades na solução candidata. Os
+       mesmos carros são associados às mesmas cidades, porém os pontos de aluguel e devolução
+       são trocados. Por exemplo, considere o caminho (1, 2, 3, 4, 5) contendo cinco cidades, onde
+       o carro 1 foi locado na cidade 1 e devolvido na cidade 3 e o carro 2 foi locado na cidade 3
+       e devolvido na cidade 1. Após a aplicação do método, o percurso se torna (5,4,3,2,1) com o
+       carro 1 locado na cidade 5 e devolvido na cidade 3 e o carro 2 sendo locado na cidade 3 e
+       devolvido na cidade 5.
+
+    · 2-opt: é uma busca local simples, proposta em [Croes, 1958] para o PCV. Um movimento
+       2-opt consiste em eliminar duas arestas da solução e ligar novamente essas duas arestas de
+       forma cruzada. Se esta nova configuração for melhor que a anterior, mantenha a nova rota.
+       Caso contrário, escolha novamente duas arestas para análise.
+
+    · replaceSavingCar: Este procedimento,adotado em [da Silva Menezes et al., 2014], tem como
+       foco a inserção de um novo carro, substituindo um que já esteja na solução, se possível.
+
+           Essas três buscas locais são aplicadas em seqüência no procedimento buscaLocalMultiO-
+per(). Se a solução de entrada, representada pelo indivíduo ind é melhorada durante a busca local,
+então o ind é substituído pelo melhorado.
+
+                                                                                                                        DOI: 10.59254/sbpo-2025-212586
+                                                                                                    https://proceedings.science/p/212586?lang=pt-br
+           De maneira similar a [da Silva Menezes et al., 2014], uma população de elite é con-
+siderada para a recombinação. Esta população de elite, elitepop, contém os #elite percentuais
+melhores indivíduos da população atual em termos de seus valores de aptidão, calculado de acordo
+com a expressão (1).
+
+           O procedimento de recombinação, recombina(), é baseado no Crossover 1X utilizado em
+[da Silva Menezes et al., 2014]. Um dos pais é escolhido da população geral e o outro é escolhido
+na população de elite. Ambos são escolhidos aleatoriamente.
+
+           Assim como nas versões anteriores, pode ser necessário restaurar a viabilidade de solu-
+ções geradas durante o processo de recombinação ou de busca local. Nesta versão do CaRS, a
+inviabilidade pode ocorrer na repetição de cidades na rota ou na devolução do carro. O procedi-
+mento de restauração da rota é o mesmo utilizado em [Goldbarg et al., 2012]. A restauração devido
+a devolução do veículo é feita através da substituição do carro que está sendo devolvido em cidade
+de índice par pelo carro que está associado à cidade imediatamente posterior. O procedimento con-
+tinua até que o índice seja ímpar. Caso o procedimento não consiga restaurar o cromossomo, então
+o carro associado à cidade inicial é utilizado em todo o percurso.
+
+4. Metodologia
+           Para verificar a efetividade do algoritmo proposto, um estudo empírico com os resultados
+
+de benchmark do CaRS, é conduzido e apresentado nessa secção. A base de dados, disponível em
+http://www.dimap.ufrn.br/lae/en/projects/CaRS.php, contém a descrição de cada grupo de instân-
+cias e os formatos de arquivo.
+
+           Nesta versão do problema, as instâncias consideram as seguintes características: todos os
+carros podem ser locados em todas as cidades; os carros só podem ser devolvidos em cidades com
+índice ímpar; o mesmo tipo de carro pode ser locado mais de uma vez durante o trajeto; a taxa
+de retorno para devolução de veículo para sua cidade de aluguel não é associada à topologia do
+problema; o custo de percurso é simétrico; o grafo é completo. As instâncias são divididas em duas
+classes: Euclideanos e não-Euclideanos
+
+           A formulação matemática apresentada na seção 2 foi implementada no solver GLPK,
+versão 4.55., com tempo de processamento limitado em até 10.000 segundos. O processamento é
+encerrado caso o solver encontre a solução ótima ou atinja o tempo de processamento pré-definido.
+
+           Os parâmetros do algoritmo memético foram os mesmos utilizados em [da Silva Menezes
+et al., 2014] e são: tamP op = 150, #recombina = 0.4 e #elite = 0.3. O critério de parada foi
+de limitIter = 100 iterações.
+
+           Para o algoritmo memético, cada instância foi executada trinta vezes. A partir destes
+resultados foram computados o tempo de processamento médio, o menor valor encontrado para a
+função objetivo, o valor médio da função objetivo, e a quantidade de vezes que a melhor solução foi
+encontrada.
+
+           O algoritmo foi executado em um notebook Dell com processador Intel® CoreTM i5 de 13
+geração, 16 GB de memória RAM e SSD de 512 GB. O sistema operacional foi o Ubuntu 24.04
+LTS. O algoritmo memético foi desenvolvido em linguagem C++, e compilador GCC 13.3.00.
+
+5. Resultados e Discussões
+           Os resultados do experimento computacional está disponível nas tabelas 1 e 2. As co-
+
+lunas Nome, nCid e nCar são referentes às características das instâncias e são, respectivamente, a
+identificação da instância, o número de cidades e o número de carros. As colunas Min and T(s),
+relativas ao solver GLPK, mostram o valor da melhor solução viável encontrado e o tempo de pro-
+cessamento em segundos. As colunas Min, Media, F and T(s), relativos ao algoritmo memético
+mostram, respectivamente, o valor da solução mínima, a média das soluções mínimas encontradas
+em trinta rodadas do algoritmo, o número de vezes que a melhor solução foi encontrada e o tempo
+
+                                                                                                                        DOI: 10.59254/sbpo-2025-212586
+                                                                                                    https://proceedings.science/p/212586?lang=pt-br
+de processamento em segundos. A coluna Gap, para cada estratégia, apresenta o desvio percentual
+do valor da coluna Min em relação ao limite inferir para a solução exata, calculado pelo GLPK.
+
+           A tabela 1 mostra que o GLPK encontra a solução ótima para quase todas as instâncias
+Euclideanas. A exceção fica para as instânias China17e, Canada17e, Cazaquistao15e e Brasil16e
+nas quais o GLPK parou por limitação de tempo. O desvio percentual em relação ao limite inferior
+calculado pelo GLPK para essas instâncias foi de 9.90, 2.30, 7.50 and 3.5, respectivamente. GLPK
+precisou de um tempo maior para encontrar a solução das instâncias em relação ao algoritmo me-
+mético. Esta diferença é maior, a medida em que o tamanho da instância cresce. O GLPK encontra
+soluções melhores que o algoritmo memético em 3 instancias e o oposto ocorre em 1 instância. O
+algoritmo memético utilizou um tempo médio de processamento menor do que o GLPK. Em mé-
+dia, o GLPK utilizou 2413.69 segundos para encontrar as soluções para as instâncias Euclideanas,
+enquanto o algoritmo memético utilizou 5.29 segundos. A frequência média em que o algoritmo
+memético encontrou a melhor solução foi de 16.34.
+
+           A tabela 2 mostra que o GLPK não conseguiu encontrar a solução ótima para dezessete
+instâncias não Euclideanas, onde o algoritmo parou devido a limitação de tempo. O desvio per-
+centual variou entre 6.30 e 34.40. Em quinze dessas dezessete instâncias, o algoritmo memético
+encontrou melhores soluções que as produzidas pelo GLPK. O algoritmo memético também utili-
+zou, em média, menos tempo de processamento para obter estas soluções. Oalgoritmo memético
+utilizou, em média, de 2.01 até 10.03 segundos para processar as instâncias não Euclideanas. Os
+resultados do GLPK foram obtidos em tempos que variaram entre 8 até 10000 segundos. A frequen-
+cia média em que o algoritmo memético encontrou a melhor solução foi de 13.24 para as instâncias
+não Euclideanas.
+
+              Tabela 1: Resultados para as Instâncias Euclideanas
+
+            Instancias             Exato (GLPK)             Memetico
+                                                          Media F
+Nome          nCid      nCar  Min T(s) GAP (%)      Min               T(s)
+                          2                         622     622 30    2.01
+Mauritania10e 10          2   622  7             0  620   620.13 29   2.50
+                          2                         714               3.03
+Colombia11e   11          2   620  3             0  672     714 30    3.54
+                          2                         754     672 30    4.07
+Angola12e     12          2   714 11             0  305    756.1 21   4.19
+                          2                         756   305.37 19   4.88
+Peru13e       13          2   672  5             0  959    756.4 27   5.63
+                          2                         950   964.17 19   6.42
+Libia14e      14          3   754 46             0  739   971.67 2    2.51
+                          3                         679    740.9 15   3.00
+BrasilRJ14e   14          3   305 463            0  854     679 30    3.58
+                          3                         764     854 30    4.28
+Congo15e      15          3   756  7             0  895    764.9 27   5.04
+                          3                         840   899.77 16   5.81
+Argentina16e  16          3   959 526            0  1136  851.17 6    6.75
+                          3                         1011  1163.93 1   7.86
+EUA17e        17          4   950 1879           0  631   1026.4 1    2.85
+                          4                         673   631.03 29   3.49
+Bolivia10e    10          4   739 33             0  859   680.47 20   4.19
+                          4                         1051  867.13 15   4.99
+AfricaSul11e  11          4   679 18             0  843   1055.2 6    5.87
+                          4                         863   851.23 15   6.79
+Niger12e      12          4   854 90             0  1051   871.1 9    7.79
+                          4                         1280  1054.9 4    8.98
+Mongolia13e   13          5   764 526            0  987   1337.77 8   6.58
+                          5                         966   997.17 12   7.68
+Indonesia14e  14          5   895 303            0  1216  981.63 9    8.88
+                          5                         1057  1232.83 13  10.09
+Argelia15e    15              840 2619           0         1092 1
+
+India16e      16              1136 1384          0
+
+China17e      17              1008 10000  9.9
+
+Etiopia10e    10              631 53             0
+
+Mali11e       11              673 60             0
+
+Chade12e      12              859 232            0
+
+Ira13e        13              996 2781           0
+
+Mexico14e     14              843 1619           0
+
+Sudao15e      15              863 2802           0
+
+Australia16e  16              1051 3738          0
+
+Canada17e     17              1280 10000  2.3
+
+Arabia14e     14              987 2905           0
+
+Cazaquistao15e 15             987 10000   7.5
+
+Brasil16e     16              1216 10000  3.5
+
+Russia17e     17              1046 7887          0
+
+                                                                             DOI: 10.59254/sbpo-2025-212586
+                                                          https://proceedings.science/p/212586?lang=pt-br
+              Tabela 2: Resultados para as Instâncias não-Euclideanas
+
+            Instancia             Exato (GLPK)             Memetico
+                                                         Media F
+Nome          nCid     nCar  Min T(s) GAP (%)      Min                 T(s)
+                         2                         612     612 30      1.97
+Mauritania10n 10         2   612  8             0  639    639.1 28     2.49
+                         2                         671    671.1 27     2.93
+Colombia11n   11         2   639 140            0  707   707.33 26     3.46
+                         2                         744   744.17 27     4.14
+Angola12n     12         2   671 126            0  167   167.37 19     4.20
+                         2                         886   886.07 28     4.79
+Peru13n       13         2   707 2453           0  876   877.03 12     5.61
+                         2                         822   824.43 2      6.36
+Libia14n      14         3   745 10000   7.8       825     826 24      2.46
+                         3                         781   781.93 19     2.99
+BrasilRJ14n   14         3   168 10000 10.1        826   828.87 12     3.54
+                         3                         799   804.97 8      4.16
+Congo15n      15         3   886 1745           0  843    850.3 13     4.95
+                         3                         863   868.83 2      5.76
+Argentina16n  16         3   878 10000 13.9        1050  1064.27 10    6.64
+                         3                         945   953.63 1      7.67
+EUA17n        17         4   822 10000   8.9       719   720.23 12     2.85
+                         4                         841   841.63 20     3.42
+Bolivia10n    10         4   825 31             0  891   982.67 18     4.21
+                         4                         989   1028.77 7     4.95
+AfricaSul11n  11         4   781 3040           0  950   965.37 4      5.74
+                         4                         1096  1096.7 19     6.63
+Niger12n      12         4   826 1403           0  1101  1114.73 4     7.66
+                         4                         1277  1305.27 4     8.86
+Mongolia13n   13         5   804 10000 13.2        1129  1175.83 2     6.58
+                         5                         1134  1161.57 3     7.58
+Indonesia14n  14         5   848 10000 14.5        1266   1335 2       8.85
+                         5                         1104  1136.5 1      10.03
+Argelia15n    15             865 10000 20.8
+
+India16n      16             1052 10000 16.7
+
+China17n      17             947 10000 15.9
+
+Etiopia10n    10             719 889            0
+
+Mali11n       11             841 5879           0
+
+Chade12n      12             891 8161           0
+
+Ira13n        13             1010 10000 19.5
+
+Mexico14n     14             959 10000 28.3
+
+Sudao15n      15             1099 10000 27.7
+
+Australia16n  16             1116 10000 21.2
+
+Canada17n     17             1289 10000 28.5
+
+Arabia14n     14             1129 10000  6.3
+
+Cazaquistao15n 15            1139 10000 24.1
+
+Brasil16n     16             1320 10000 34.4
+
+Russia17n     17             1133 10000 29.6
+
+6. Considerações Finais
+
+           Este trabalho apresentou uma nova variante do problema CaRS [Goldbarg et al., 2012],
+caracterizada pela ausência de uma cidade fixa de partida, pela possibilidade de alugar o mesmo tipo
+de carro mais de uma vez ao longo do trajeto e pela introdução de restrições de devolução de veí-
+culos, limitando os pontos de entrega a um subconjunto de cidades. Foi proposta uma formulação
+matemática para essa versão, cuja implementação foi realizada no solver GLPK, com tempo de pro-
+cessamento limitado a 10.000 segundos. Além disso, desenvolveu-se um algoritmo memético com
+três estratégias de busca local, cuja eficácia foi avaliada por meio de experimentos computacionais.
+
+           O desempenho do algoritmo foi comparado ao do GLPK em um conjunto de 58 instâncias,
+sendo 29 Euclideanas e 29 não Euclideanas. O GLPK encontrou soluções exatas em 37 instâncias,
+enquanto o algoritmo memético estabeleceu novos limites em outras 17. Nas instâncias Euclidea-
+nas, o algoritmo heurístico obteve soluções próximas às exatas em quase todos os casos, superando
+o GLPK em uma instância. Já nas instâncias não Euclideanas, o algoritmo memético apresentou
+desempenho superior em 16 casos. Os resultados indicam que a proposta é particularmente eficaz
+para instâncias de maior dimensão e topologias mais complexas, além de apresentar menor tempo de
+processamento em comparação com o GLPK, reforçando seu potencial como abordagem alternativa
+para a resolução desta variante do problema CaRS em contextos práticos.
+
+           Como esta variação do problema CaRS é nova na literatura, várias inovações podem ser
+implementadas em pesquisas futuras, tais como: (a) desenvolver e analisar outras metaheurísticas
+adaptadas às características dessa versão do problema; (b) desenvolver e investigar outras buscas
+locais adaptadas ao problema; (c) desenvolver algoritmos para outras variações do problema CaRS.
+
+                                                                            DOI: 10.59254/sbpo-2025-212586
+                                                         https://proceedings.science/p/212586?lang=pt-br
+Referências
+AIMMS (2012). Integer programming tricks. URL http://www.aimms.com.
+
+Croes, G. A. (1958). A method for solving traveling-salesman problems. Operations research, 6
+   (6):791­812.
+
+da Silva, A. R. V. e Ochi, L. S. (2016). An efficient hybrid algorithm for the traveling car renter
+   problem. Expert Systems with Applications, 64:132­140. ISSN 0957-4174. URL https:
+   //www.sciencedirect.com/science/article/pii/S0957417416303852.
+
+da Silva Menezes, M., Goldbarg, M. C., e Goldbarg, E. F. (2014). A memetic algorithm for the
+   prize-collecting traveling car renter problem. In Evolutionary Computation (CEC), 2014 IEEE
+   Congress on, p. 3258­3265. IEEE.
+
+de Araujo Sabry, G., Goldbarg, M. C., Goldbarg, E. F. G., da Silva Menezes, M., e Calheiros, Z.
+   S. A. (2020). Models and linearizations for the traveling car renter with passengers. SpringerNa-
+   ture Complete Journals, 15(1):59­81.
+
+Felipe, D., Ferreira Gouvêa Goldbarg, E., e Goldbarg, M. C. (2014). Scientific algorithms for the
+   car renter salesman problem. In 2014 IEEE Congress on Evolutionary Computation (CEC), p.
+   873­879.
+
+Glover, F. e Woolsey, E. (1974). converting the 0-1 polynomial programming problem to a 0-1
+   linear program. Operations research, 22(1):180­182.
+
+Goldbarg, M. C., Goldbarg, E. F. G., Luna, H. P. L., Menezes, M. S., e Corrales, L. (2017). Integer
+   programming models and linearizations for the traveling car renter problem. SpringerNature
+   Complete Journals, 12(4):743­761.
+
+Goldbarg, M. C., Goldbarg, E. F., Asconavieta, P. H., Menezes, M. d. S., e Luna, H. P. (2013). A
+   transgenetic algorithm applied to the traveling car renter problem. Expert Systems with Applica-
+   tions, 40(16):6298­6310.
+
+Goldbarg, M. C., Asconavieta, P. H., e Goldbarg, E. F. G. (2012). Memetic algorithm for the
+   traveling car renter problem: an experimental investigation. Memetic Computing, 4(2):89­108.
+
+Gutin, G. e Punnen, A. P. (2002). The traveling salesman problem and its variations, volume 12.
+   Springer Science & Business Media.
+
+Lacroix, M., Solis, Y. R., e Calvo, R. W. (2021). Efficient formulations for the traveling car renter
+   problem and its quota variant. SpringerNature Complete Journals, 15(6):1905­1930.
+
+Liberti, L. (2007). Compact linearization for binary quadratic problems. 4OR, 5(3):231­245.
+
+Miller, C. E., Tucker, A. W., e Zemlin, R. A. (1960). Integer programming formulation of traveling
+   salesman problems. Journal of the ACM (JACM), 7(4):326­329.
+
+Mordor Intelligence (2024). Car rental market - growth, trends, covid-19 impact, and forecasts
+   (2024 - 2029). https://www.mordorintelligence.com/industry-reports/
+   car-rental-market. Accessed: 2025-04-25.
+
+                                                                                                                        DOI: 10.59254/sbpo-2025-212586
+                                                                                                    https://proceedings.science/p/212586?lang=pt-br
+                                  Ong, Y.-S., Lim, M. H., e Chen, X. (2010). Research frontier-memetic computation--past, present
+                                     & future. IEEE Computational Intelligence Magazine, 5(2):24.
+
+                                  Rios, B. H. O., Casquina, J. C., Añasco, H. H. V., e Paz-Valderrama, A. (2021). Corrected for-
+                                     mulations for the traveling car renter problem. In Simos, D. E., Pardalos, P. M., e Kotsireas,
+                                     I. S., editors, Learning and Intelligent Optimization, p. 351­363, Cham. Springer International
+                                     Publishing. ISBN 978-3-030-92121-7.
+
+                                                     DOI: 10.59254/sbpo-2025-212586
+                                  https://proceedings.science/p/212586?lang=pt-br
+
+Powered by TCPDF (www.tcpdf.org)
+
